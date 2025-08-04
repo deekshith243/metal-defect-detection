@@ -1,0 +1,13 @@
+# Virtual environment
+venv/
+
+# Other common Python ignore files
+__pycache__/
+*.pyc
+
+# PyTorch trained model
+faster_rcnn_model.pth
+
+# OS specific files
+.DS_Store
+Thumbs.db
