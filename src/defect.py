@@ -15,10 +15,10 @@ MODEL_PATH = 'faster_rcnn_model.pth' # Make sure this file is in the same direct
 NUM_CLASSES = 5
 LABEL_MAP = {
     0: "background",
-    1: "scratch",
+    1: "cut",     # Changed from "scratch"
     2: "dent",
     3: "pit",
-    4: "cut"
+    4: "scratch"  # Changed from "cut"
 }
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 
@@ -37,11 +37,11 @@ def get_model_instance_segmentation(num_classes):
 
 def predict_image(image_path, model_path):
     print(f"Processing image: {image_path}")
-    
+
     if not os.path.exists(image_path):
         print(f"Error: Image file not found at {image_path}")
         return
-    
+
     if not os.path.exists(model_path):
         print(f"Error: Model file not found at {model_path}")
         return
@@ -68,45 +68,40 @@ def predict_image(image_path, model_path):
     ax.axis('off')
 
     detected_defects = []
-    
+
     for box, label, score in zip(pred_boxes, pred_labels, pred_scores):
         if score > 0.5:
             xmin, ymin, xmax, ymax = [int(i) for i in box]
-            
+
+            # Create a rectangle patch
             rect = plt.Rectangle((xmin, ymin), xmax - xmin, ymax - ymin,
                                  fill=False, color='red', linewidth=2)
             ax.add_patch(rect)
-            
-            detected_defects.append("defect")
-            
-            # The change is here: ':.0%' to format as a percentage
-            label_text = f"Defect: {score:.0%}"
+
+            # Get the class name
+            class_name = LABEL_MAP.get(label, "unknown")
+            detected_defects.append(class_name)
+
+            # Add label text
+            label_text = f"{class_name}: {score:.2f}"
             ax.text(xmin, ymin - 5, label_text, color='white',
                     bbox=dict(facecolor='red', alpha=0.5))
 
     # --- Print Final Result ---
     final_status_message = "Status: No defects found."
-    
     if detected_defects:
-        final_status_message = "Status: Metal has defects."
-        num_defects = len(detected_defects)
-        average_accuracy = np.mean(pred_scores[pred_scores > 0.5])
-        
-        print("\n--- Final Status ---")
-        print(final_status_message)
-        print(f"Number of defects: {num_defects}")
-        # The change is here: ':.2%' to format as a percentage
-        print(f"Average accuracy: {average_accuracy:.2%}")
+        final_status_message = "Status: Disc has defects."
 
-    else:
-        print("\n--- Final Status ---")
-        print("Status: Metal has no defects.")
+    print("\n--- Final Status ---")
+    print(final_status_message)
+
+    if detected_defects:
+        print(f"Defects found: {', '.join(sorted(list(set(detected_defects))))}")
 
     final_text = [final_status_message]
     if detected_defects:
-        final_text.append(f"Number of defects: {num_defects}")
-        final_text.append(f"Average accuracy: {average_accuracy:.2%}")
-        
+        final_text.append(f"Defects found: {', '.join(sorted(list(set(detected_defects))))}")
+
     y_position = 10
     for line in final_text:
         plt.text(10, y_position, line, color='white', fontsize=12,
@@ -121,6 +116,7 @@ if __name__ == '__main__':
     uploaded = files.upload()
     if uploaded:
         uploaded_filename = list(uploaded.keys())[0]
+        # Move the uploaded file to the current directory for easy access
         !mv "/content/{uploaded_filename}" .
         predict_image(uploaded_filename, MODEL_PATH)
     else:
