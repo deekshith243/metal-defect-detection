@@ -24,11 +24,11 @@ NUM_EPOCHS = 10
 
 # Label mapping for defects
 LABEL_MAP = {
-    "background": 0,
-    "scratch": 1,
-    "dent": 2,
-    "pit": 3,
-    "cut": 4
+    0: "background", 
+    1: "cut", 
+    2: "dent", 
+    3: "pit", 
+    4: "scratch"
 }
 
 # Diameter ranges and conversion factor
